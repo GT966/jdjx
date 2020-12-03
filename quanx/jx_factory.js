@@ -3,7 +3,7 @@
  * @Github: https://github.com/whyour
  * @Date: 2020-11-29 13:14:19
  * @LastEditors: whyour
- * @LastEditTime: 2020-12-03 11:00:15
+ * @LastEditTime: 2020-12-03 13:23:56
  * 多谢： https://github.com/MoPoQAQ, https://github.com/lxk0301
  * 添加随机助力
  * 自动开团助力
@@ -34,7 +34,6 @@ $.currentCookie = '';
 $.allTask = [];
 $.info = {};
 $.userTuanInfo = {};
-$.testAssistId = 'k3XRgh9SqTEODDhQVrfL1A==';
 
 !(async () => {
   if (!getCookies()) return;
@@ -64,13 +63,13 @@ $.testAssistId = 'k3XRgh9SqTEODDhQVrfL1A==';
       await submitInviteId(userName);
       await $.wait(500);
       await createAssistUser();
-      await createTestAssistUser();
+      await $.wait(500);
       const endInfo = await getUserInfo();
       await $.wait(500);
       $.result.push(
         `名称：${$.info.commodityInfo.name}`,
-        `任务前能量：${beginInfo.user.electric} 任务后能量：${endInfo.user.electric}`,
-        `获得能量：${endInfo.user.electric - beginInfo.user.electric} 还需能量：${
+        `任务前电力：${beginInfo.user.electric} 任务后电力：${endInfo.user.electric}`,
+        `获得电力：${endInfo.user.electric - beginInfo.user.electric} 还需电力：${
           endInfo.productionInfo.needElectric - beginInfo.productionInfo.investedElectric
         }`,
       );
@@ -78,6 +77,7 @@ $.testAssistId = 'k3XRgh9SqTEODDhQVrfL1A==';
       await getTuanId();
       await submitTuanId(userName);
       await joinTuan();
+      await awardTuan();
     }
   }
   await showMsg();
@@ -156,7 +156,7 @@ function getCurrentElectricity() {
             data: { currentElectricityQuantity, doubleElectricityFlag, maxElectricityQuantity } = {},
             msg,
           } = JSON.parse(data);
-          $.log(`\n获取当前能量：${msg}\n${$.showLog ? data : ''}`);
+          $.log(`\n获取当前电力：${msg}\n${$.showLog ? data : ''}`);
           if (currentElectricityQuantity === maxElectricityQuantity && doubleElectricityFlag) {
             await collectElectricity($.info.factoryInfo.factoryId);
           }
@@ -450,21 +450,6 @@ function submitInviteId(userName) {
   });
 }
 
-function createTestAssistUser() {
-  return new Promise(resolve => {
-    $.get(taskAssistUrl('friend/AssistFriend', `sharepin=${$.testAssistId}`), async (err, resp, data) => {
-      try {
-        const { msg } = JSON.parse(data);
-        $.log(`\n${msg}\n${$.showLog ? data : ''}`);
-      } catch (e) {
-        $.logErr(e, resp);
-      } finally {
-        resolve();
-      }
-    });
-  })
-}
-
 function createAssistUser() {
   return new Promise(resolve => {
     $.get({ url: 'https://api.ninesix.cc/api/jx-factory' }, (err, resp, _data) => {
@@ -562,7 +547,7 @@ function submitTuanId(userName) {
 
 function createTuan() {
   return new Promise(async resolve => {
-    $.get(taskUrl('tuan/CreateTuan', `activeId=jfkcidGQavswLOBcAWljrw%3D%3D&isOpenApp=1`), async (err, resp, data) => {
+    $.get(taskTuanUrl('tuan/CreateTuan', `activeId=jfkcidGQavswLOBcAWljrw%3D%3D&isOpenApp=1`), async (err, resp, data) => {
       try {
         const { msg, data: { userTuanInfo } = {} } = JSON.parse(data);
         $.log(`\n开团信息：${msg}\n${!$.showLog ? data : ''}`);
@@ -585,7 +570,7 @@ function joinTuan() {
         const { data = {} } = JSON.parse(_data);
         $.log(`\n${data.value}\n${$.showLog ? _data : ''}`);
         $.get(
-          taskUrl('tuan/JoinTuan', `activeId=jfkcidGQavswLOBcAWljrw%3D%3D&tuanId=${escape(data.value)}`),
+          taskTuanUrl('tuan/JoinTuan', `activeId=jfkcidGQavswLOBcAWljrw%3D%3D&tuanId=${data.value}`),
           async (err, resp, data) => {
             try {
               const { msg } = JSON.parse(data);
@@ -603,6 +588,28 @@ function joinTuan() {
         );
       } catch (e) {
         $.logErr(e, resp);
+      }
+    });
+  });
+}
+
+function awardTuan() {
+  return new Promise(async resolve => {
+    if (!$.userTuanInfo || !$.userTuanInfo.tuanId) {
+      resolve();
+      return;
+    }
+    $.get(taskTuanUrl('tuan/Award', `activeId=jfkcidGQavswLOBcAWljrw%3D%3D&tuanId=${$.userTuanInfo.tuanId}`), async (err, resp, data) => {
+      try {
+        const { ret, msg, data: { electric = 0 } = {} } = JSON.parse(data);
+        if (ret === 0) {
+          $.log(`\n领取开团奖励：${msg}，获得电力 ${electric}\n${!$.showLog ? data : ''}`);
+          await createTuan();
+        }
+      } catch (e) {
+        $.logErr(e, resp);
+      } finally {
+        resolve();
       }
     });
   });
@@ -668,6 +675,22 @@ function taskAssistUrl(function_path, body) {
       'Accept-Encoding': `gzip, deflate, br`,
       Host: `m.jingxi.com`,
       'Accept-Language': `zh-cn`,
+    },
+  };
+}
+
+function taskTuanUrl(function_path, body) {
+  return {
+    url: `${JD_API_HOST}dreamfactory/${function_path}?${body}&zone=dream_factory&sceneval=2&g_login_type=1&_time=${Date.now()}&_=${Date.now()}`,
+    headers: {
+      Cookie: $.currentCookie,
+      Accept: `*/*`,
+      Connection: `keep-alive`,
+      Referer: `https://st.jingxi.com/pingou/dream_factory/index.html`,
+      'Accept-Encoding': `gzip, deflate, br`,
+      Host: `m.jingxi.com`,
+      'Accept-Language': `zh-cn`,
+      "User-Agent": "jdpingou;",
     },
   };
 }
