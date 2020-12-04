@@ -3,7 +3,7 @@
  * @Github: https://github.com/whyour
  * @Date: 2020-11-29 13:14:19
  * @LastEditors: whyour
- * @LastEditTime: 2020-12-03 15:43:24
+ * @LastEditTime: 2020-12-04 00:51:06
  * 多谢： https://github.com/MoPoQAQ, https://github.com/lxk0301
  * 添加随机助力
  * 自动开团助力
@@ -285,11 +285,13 @@ function awardTask({ taskId, taskName }) {
     $.get(taskListUrl('Award', `taskId=${taskId}`), (err, resp, data) => {
       try {
         const { msg, ret, data: { prizeInfo = '' } = {} } = JSON.parse(data);
-        $.log(
-          `\n${taskName}[领奖励]：${
-            msg.indexOf('活动太火爆了') !== -1 ? '任务进行中或者未到任务时间' : msg
-          }：获得钞票 ${prizeInfo.slice(0, -2)}\n${$.showLog ? data : ''}`,
-        );
+        let str = '';
+        if (msg.indexOf('活动太火爆了') !== -1) {
+          str = '任务为成就任务或者未到任务时间';
+        } else {
+          str = msg + prizeInfo ? ` 获得电力 ${prizeInfo.slice(0, -2)}` : '';
+        }
+        $.log(`${taskName}[领奖励]：${str}：\n${$.showLog ? data : ''}`);
         resolve(ret === 0);
       } catch (e) {
         $.logErr(e, resp);
@@ -547,12 +549,12 @@ function submitTuanId(userName) {
 
 function createTuan() {
   return new Promise(async resolve => {
-    $.get(taskTuanUrl('tuan/CreateTuan', `activeId=jfkcidGQavswLOBcAWljrw%3D%3D&isOpenApp=1`), async (err, resp, data) => {
+    $.get(taskTuanUrl('tuan/CreateTuan', `activeId=jfkcidGQavswLOBcAWljrw%3D%3D&isOpenApp=1`), async (err, resp, _data) => {
       try {
-        const { msg, data: { userTuanInfo } = {} } = JSON.parse(data);
-        $.log(`\n开团信息：${msg}\n${$.showLog ? data : ''}`);
-        if (userTuanInfo) {
-          $.userTuanInfo = userTuanInfo;
+        const { msg, data = {} } = JSON.parse(_data);
+        $.log(`\n开团信息：${msg}\n${$.showLog ? _data : ''}`);
+        if (data) {
+          $.userTuanInfo = {...$.userTuanInfo, ...data};
         }
       } catch (e) {
         $.logErr(e, resp);
