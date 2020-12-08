@@ -3,7 +3,7 @@
  * @Github: https://github.com/whyour
  * @Date: 2020-11-20 10:42:06
  * @LastEditors: whyour
- * @LastEditTime: 2020-12-05 01:07:43
+ * @LastEditTime: 2020-12-08 00:44:10
 
   quanx:
   [task_local]
@@ -56,7 +56,7 @@ $.drawCenterInfo = {};
       await browseTasks($.tokens[i]);
       await gameTask($.tokens[i]);
       const inviteId = await getInviteId($.tokens[i]);
-      await submitInviteId(inviteId, $.userNames[i]);
+      await submitInviteId(inviteId, userName);
       // 没人只能助力一次，全凭天意，每天0点清库
       await createAssistUser($.tokens[i]);
       const endHomeInfo = await getHomeInfo($.tokens[i]);
@@ -201,7 +201,8 @@ function getHomeInfo(token) {
       taskUrl("ssjj-wo-home-info/queryByUserId/2", {}, token),
       (err, resp, data) => {
         try {
-          const { body } = JSON.parse(data);
+          const { body, head = {} } = JSON.parse(data);
+          $.log(`\n获取home信息：${head.msg}\n${data}`);
           if (!body || !body.woB) {
             $.msg($.name, '请先开通东东小窝！')
             resolve(false);
