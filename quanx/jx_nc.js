@@ -3,7 +3,7 @@
  * @Github: https://github.com/whyour
  * @Date: 2020-12-06 11:11:11
  * @LastEditors: whyour
- * @LastEditTime: 2020-12-10 23:00:12
+ * @LastEditTime: 2020-12-11 00:21:48
  * 打开京喜农场，手动完成工厂任务或者签到任务，或者金牌厂长任务，提示获取cookie成功，然后退出跑任务脚本
 
   hostname = wq.jd.com
@@ -216,7 +216,7 @@ function submitInviteId(userName) {
     $.log('你的活动id: ' + $.info.active);
     $.post(
       {
-        url: `http://127.0.0.1:8080/api/jx-nc/${$.info.smp}/${encodeURIComponent(userName)}?active=${$.info.active}`,
+        url: `https://api.ninesix.cc/api/jx-nc/${$.info.smp}/${encodeURIComponent(userName)}?active=${$.info.active}`,
       },
       (err, resp, _data) => {
         try {
@@ -237,13 +237,13 @@ function submitInviteId(userName) {
 
 function createAssistUser() {
   return new Promise(resolve => {
-    $.get({ url: `https://api.ninesix.cc/api/jx-nc?active=${$.info.active}` }, (err, resp, _data) => {
+    $.get({ url: `https://api.ninesix.cc/api/jx-nc?active=${$.info.active}` }, async (err, resp, _data) => {
       try {
         const { data = {} } = JSON.parse(_data);
         $.log(`\n${data.value}\n${$.showLog ? _data : ''}`);
         if (!data.value) {
-          await $.wait(1000)
-          await createAssistUser();
+          $.result.push('助力失败或者同活动助力码不存在，请再次手动执行脚本！');
+          resolve();
           return;
         }
         $.get(
