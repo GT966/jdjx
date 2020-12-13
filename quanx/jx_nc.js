@@ -93,13 +93,15 @@ function getCookies() {
 function getMessage(endInfo) {
   const need = endInfo.target - endInfo.score;
   const get = $.drip;
-  const max = parseInt(need / get);
-  const min = parseInt(need / (get + $.helpTask.limit * $.helpTask.eachtimeget));
   $.result.push(
     `【水果名称】${endInfo.prizename}`,
-    `【水滴】获得水滴${get} 还需水滴${need}`,
-    `【预测】还需 ${min} ~ ${max} 天`
+    `【水滴】获得水滴${get} 还需水滴${need}`
   );
+  if (get > 0) {
+    const max = parseInt(need / get);
+    const min = parseInt(need / (get + $.helpTask.limit * $.helpTask.eachtimeget));
+    $.result.push(`【预测】还需 ${min} ~ ${max} 天`);
+  }
 }
 
 function getTaskList() {
@@ -174,8 +176,7 @@ function answerTask() {
       async (err, resp, data) => {
         try {
           const res = data.match(/try\{whyour\(([\s\S]*)\)\;\}catch\(e\)\{\}/)[1];
-          $.log(res);
-          const { ret, retmsg } = JSON.parse(res);
+          let { ret, retmsg } = JSON.parse(res);
           retmsg = retmsg === '' ? retmsg : 'success';
           $.log(
             `\n${taskname}[做任务]：${retmsg.indexOf('活动太火爆了') !== -1 ? '任务进行中或者未到任务时间' : retmsg}${
@@ -215,8 +216,7 @@ function doTask({ tasklevel, left, taskname, eachtimeget }) {
       (err, resp, data) => {
         try {
           const res = data.match(/try\{whyour\(([\s\S]*)\)\;\}catch\(e\)\{\}/)[1];
-          $.log(res);
-          const { ret, retmsg } = JSON.parse(res);
+          let { ret, retmsg } = JSON.parse(res);
           retmsg = retmsg === '' ? retmsg : 'success';
           $.log(
             `\n${taskname}[做任务]：${retmsg.indexOf('活动太火爆了') !== -1 ? '任务进行中或者未到任务时间' : retmsg}${
@@ -284,7 +284,7 @@ function createAssistUser() {
               const res = data.match(/try\{whyour\(([\s\S]*)\)\;\}catch\(e\)\{\}/)[1];
               const { ret, retmsg = '' } = JSON.parse(res);
               $.log(`\n助力：${retmsg} \n${$.showLog ? res : ''}`);
-              if (ret !== 1016 || (retmsg !== 'today help max' && retmsg !== 'cannot helf self')) {
+              if (ret === 0) {
                 await createAssistUser();
               }
             } catch (e) {
