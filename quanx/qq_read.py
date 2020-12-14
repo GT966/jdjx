@@ -34,7 +34,7 @@ def get_standard_time():
     # <class 'datetime.datetime'>
     utc_datetime = datetime.utcnow().replace(tzinfo=timezone.utc)  # utc时间
     beijing_datetime = utc_datetime.astimezone(timezone(timedelta(hours=8)))  # 北京时间
-    return utc_datetime, beijing_datetime
+    return beijing_datetime
 
 def pretty_dict(dict):
     """
@@ -440,34 +440,33 @@ def withdraw_to_wallet(headers, amount):
 
 def qq_read():
   # 确定脚本是否开启执行模式
+  title = f'📚企鹅读书'
+  content = ''
+  result = ''
+  beijing_datetime = get_standard_time()
+  print(f'\n【企鹅读书】{beijing_datetime.strftime("%Y-%m-%d %H:%M:%S")}\n')
   for account in COOKIELIST:
     book_url = account['QQREAD_TIMEURL']
     headers = account['QQREAD_TIMEHD']
     body = account['QQREAD_BODY']
     withdraw = account['WITHDRAW']
     hosting_mode = account['HOSTING_MODE']
-    utc_datetime, beijing_datetime = get_standard_time()
-    symbol = '=' * 16
-    print(
-        f'\n{symbol}【企鹅读书】{utc_datetime.strftime("%Y-%m-%d %H:%M:%S")}/{beijing_datetime.strftime("%Y-%m-%d %H:%M:%S")} {symbol}\n')
 
     start_time = time.time()
-    title = f'📚企鹅读书'
-    content = ''
-    result = ''
 
     # 调用 track 接口，为保证输出结果美观，输出信息写在后面
     track_result = track(headers=headers, body=body)
     # 获取用户信息（昵称）
     user_info = get_user_info(headers=headers)
+    model = re.sub(r'<.*$', "", body['common']['model'])
     if user_info:
         content += f'【用户昵称】{user_info["user"]["nickName"]}'
-        result += f'【用户昵称】{user_info["user"]["nickName"]}'
+        result += f'【设备】：{model}'
     # 获取任务列表，查询金币余额
     daily_tasks = get_daily_tasks(headers=headers)
     if daily_tasks:
         content += f'\n【金币余额】剩余{daily_tasks["user"]["amount"]}金币，可提现{daily_tasks["user"]["amount"] // 10000}元'
-        result += f'\n【当前剩余】{"{:4.2f}".format(daily_tasks["user"]["amount"] / 10000)}'
+        result += f'\n【当前剩余】：{"{:4.2f}".format(daily_tasks["user"]["amount"] / 10000)}'
     # 查询今日获得金币数量
     beijing_datetime_0 = beijing_datetime.strftime(
         '%Y-%m-%d') + ' 00:00:00'
@@ -484,11 +483,11 @@ def qq_read():
                     break
         elif not red_packets:
             content += f'\n【今日收益】请求接口错误！'
-            result += f'\n【今日收益】请求接口错误！'
+            result += f'\n【今日收益】：请求接口错误！'
             break
         else:
             content += f"\n【今日收益】{today_coins_total}金币，约{'{:4.2f}'.format(today_coins_total / 10000)}元"
-            result += f"\n【今日收益】{'{:4.2f}'.format(today_coins_total / 10000)}"
+            result += f"\n【今日收益】：{'{:4.2f}'.format(today_coins_total / 10000)}"
             break
     # 查询本周阅读时长
     week_read_time = get_week_read_time(headers=headers)
@@ -674,22 +673,22 @@ def qq_read():
         for with_draw in withdraw_list['withdrawList']:
             history_coins_total -= with_draw['amount']
         content += f"\n【历史收益】{history_coins_total}金币，约{'{:4.2f}'.format(history_coins_total / 10000)}元"
-        result += f"\n【历史收益】{'{:4.2f}'.format(history_coins_total / 10000)}\n"
+        result += f"\n【历史收益】：{'{:4.2f}'.format(history_coins_total / 10000)}\n\n"
     else:
         content += f'\n【历史收益】请求接口错误！\n'
-        result += f'\n【历史收益】请求接口错误！\n'
+        result += f'\n【历史收益】：请求接口错误！\n\n'
 
-    content += f'\n🕛耗时：%.2f秒' % (time.time() - start_time)
-    print(title)
-    print(content)
+    content += f'\n🕛耗时：%.2f秒\n\n' % (time.time() - start_time)
 
-    # 每天 19:30 发送消息推送
-    if beijing_datetime.hour == 19 and beijing_datetime.minute >= 30:
-        send(title=title, content=result, notify_mode=notify_mode)
-    elif not beijing_datetime.hour == 19:
-        print('未进行消息推送，原因：没到对应的推送时间点\n')
-    else:
-        print('未在规定的时间范围内\n')
+  print(content)
+
+  # 每天 19:30 发送消息推送
+  if beijing_datetime.hour == 23 and beijing_datetime.minute >= 0 and beijing_datetime.minute <= 10:
+      send(title=title, content=result, notify_mode=notify_mode)
+  elif not beijing_datetime.hour == 23:
+      print('未进行消息推送，原因：没到对应的推送时间点\n')
+  else:
+      print('未在规定的时间范围内\n')
 
 
 def main():
