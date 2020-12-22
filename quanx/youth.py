@@ -245,7 +245,7 @@ def friendList(headers):
     print('好友列表')
     print(response)
     if response['error_code'] == 0:
-      if response['data']['active_list'].length > 0:
+      if len(response['data']['active_list']) > 0:
         for friend in response['data']['active_list']:
           if friend['button'] == 1:
             friendSign(headers=headers, uid=friend.uid)
@@ -266,7 +266,7 @@ def friendSign(headers, uid):
   url = f'{YOUTH_HOST}ShareSignNew/sendScoreV2?friend_uid={uid}'
   try:
     response = requests.get(url=url, headers=headers, timeout=30).json()
-    print('宝箱分享')
+    print('好友签到')
     print(response)
     if response['error_code'] == 0:
       return response['data']
@@ -420,7 +420,7 @@ def rotaryCheck(headers, body, rotaryRes):
     if not rotaryRes['code'] or rotaryRes['code'] != '10010':
       i = 0
       while (i <= 3):
-        if 100 - rotaryRes['data']['remainTurn'] == rotaryRes['data']['chestOpen'][i]['times']:
+        if rotaryRes['data']['opened'] >= rotaryRes['data']['chestOpen'][i]['times']:
           runRotary(headers=headers, body=body)
         i += 1
     return
@@ -503,7 +503,7 @@ def run():
     rotaryBody = f'{headers["Referer"].split("&")[15]}&{headers["Referer"].split("&")[8]}'
     sign_res = sign(headers=headers)
     if sign_res and sign_res['status'] == 1:
-      content += f'【签到结果】成功 🎉 明日+{sign_res['nextScore']}青豆'
+      content += f'【签到结果】成功 🎉 明日+{sign_res["nextScore"]}青豆'
 
     sign_info = signInfo(headers=headers)
     if sign_info:
