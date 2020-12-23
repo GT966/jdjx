@@ -244,11 +244,12 @@ def friendList(headers):
     response = requests.get(url=url, headers=headers, timeout=30).json()
     print('好友列表')
     print(response)
-    if response['error_code'] == 0:
+    if response['error_code'] == '0':
       if len(response['data']['active_list']) > 0:
         for friend in response['data']['active_list']:
           if friend['button'] == 1:
-            friendSign(headers=headers, uid=friend.uid)
+            time.sleep(1)
+            friendSign(headers=headers, uid=friend['uid'])
       return response['data']
     else:
       return
@@ -268,7 +269,7 @@ def friendSign(headers, uid):
     response = requests.get(url=url, headers=headers, timeout=30).json()
     print('好友签到')
     print(response)
-    if response['error_code'] == 0:
+    if response['error_code'] == '0':
       return response['data']
     else:
       return
@@ -278,15 +279,16 @@ def friendSign(headers, uid):
 
 def watchAdVideo(headers):
   """
-  看视频奖励
+  看广告视频
   :param headers:
   :return:
   """
   time.sleep(0.3)
   url = 'https://kd.youth.cn/taskCenter/getAdVideoReward'
+  headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8'
   try:
     response = requests.post(url=url, data="type=taskCenter", headers=headers, timeout=30).json()
-    print('看视频奖励')
+    print('看广告视频')
     print(response)
     if response['status'] == 1:
       return response
@@ -381,7 +383,7 @@ def readTime(body):
     response = requests.post(url=url, data=body, headers=headers, timeout=30).json()
     print('阅读时长')
     print(response)
-    if response['error_code'] == 0:
+    if response['error_code'] == '0':
       return response
     else:
       return
@@ -480,6 +482,8 @@ def incomeStat(headers):
   url = f'https://kd.youth.cn/wap/user/balance?{headers["Referer"].split("?")[1]}'
   try:
     response = requests.get(url=url, headers=headers, timeout=50).json()
+    print('收益统计')
+    print(response)
     if response['status'] == 0:
       return response
     else:
@@ -540,7 +544,7 @@ def run():
       content += f'\n【惊喜红包】+{article_red_res["score"]}个青豆'
     read_time_res = readTime(body=readTimeBody)
     if read_time_res:
-      content += f'\n【阅读时长】共计` + Math.floor(read_time_res.time / 60) + `分钟'
+      content += f'\n【阅读时长】共计{read_time_res["time"] // 60}分钟'
     rotary_res = {}
     for i in range(0, 5):
       time.sleep(5)
