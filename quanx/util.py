@@ -26,6 +26,8 @@ TG_PROXY_IP = ''                                                          # tg�
 TG_PROXY_PORT = ''                                                        # tg机器人的TG_PROXY_PORT; secrets可填
 DD_BOT_ACCESS_TOKEN = ''                                                  # 钉钉机器人的DD_BOT_ACCESS_TOKEN; secrets可填
 DD_BOT_SECRET = ''                                                        # 钉钉机器人的DD_BOT_SECRET; secrets可填
+QQ_SKEY = ''                                                              # qq机器人的QQ_SKEY; secrets可填
+QQ_MODE = ''                                                              # qq机器人的QQ_MODE; secrets可填
 
 notify_mode = []
 
@@ -40,6 +42,9 @@ if "TG_BOT_TOKEN" in os.environ and os.environ["TG_BOT_TOKEN"] and "TG_USER_ID" 
 if "DD_BOT_ACCESS_TOKEN" in os.environ and os.environ["DD_BOT_ACCESS_TOKEN"] and "DD_BOT_SECRET" in os.environ and os.environ["DD_BOT_SECRET"]:
     DD_BOT_ACCESS_TOKEN = os.environ["DD_BOT_ACCESS_TOKEN"]
     DD_BOT_SECRET = os.environ["DD_BOT_SECRET"]
+if "QQ_SKEY" in os.environ and os.environ["QQ_SKEY"] and "QQ_MODE" in os.environ and os.environ["QQ_MODE"]:
+    QQ_SKEY = os.environ["QQ_SKEY"]
+    QQ_MODE = os.environ["QQ_MODE"]
 
 if BARK:
     notify_mode.append('bark')
@@ -53,6 +58,9 @@ if TG_BOT_TOKEN and TG_USER_ID:
 if DD_BOT_ACCESS_TOKEN and DD_BOT_SECRET:
     notify_mode.append('dingding_bot')
     print("钉钉机器人 推送打开")
+if QQ_SKEY and QQ_MODE:
+    notify_mode.append('coolpush_bot')
+    print("QQ机器人 推送打开")
 
 def bark(title, content):
     print("\n")
@@ -124,6 +132,21 @@ def dingding_bot(title, content):
     else:
         print('推送失败！')
 
+def coolpush_bot(title, content):
+    print("\n")
+    if not QQ_SKEY or not QQ_MODE:
+        print("qq服务的QQ_SKEY或者QQ_MODE未设置!!\n取消推送")
+        return
+    print("qq服务启动")
+    url=f"https://push.xuthus.cc/{QQ_MODE}/{QQ_SKEY}"
+    headers = {'Content-Type': 'application/json'}
+    payload = f"{title}\n\n{content}"
+    response = requests.post(url=url, headers=headers, data=payload).json()
+    if response['code'] == 200:
+        print('推送成功！')
+    else:
+        print('推送失败！')
+
 def send(title, content):
     """
     使用 bark, telegram bot, dingding bot, serverJ 发送手机推送
@@ -155,6 +178,12 @@ def send(title, content):
                 telegram_bot(title=title, content=content)
             else:
                 print('未启用 telegram机器人')
+            continue
+        elif i == 'coolpush_bot':
+            if QQ_SKEY and QQ_MODE:
+                coolpush_bot(title=title, content=content)
+            else:
+                print('未启用 QQ机器人')
             continue
         else:
             print('此类推送方式不存在')
