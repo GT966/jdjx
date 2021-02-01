@@ -3,7 +3,7 @@
  * @Github: https://github.com/whyour
  * @Date: 2020-12-10 12:30:44
  * @LastEditors: whyour
- * @LastEditTime: 2021-01-31 23:12:19
+ * @LastEditTime: 2021-02-01 11:32:24
  * 打开京喜农场，手动完成任意任务，必须完成任务领到水滴，提示获取cookie成功
  * 打开京喜工厂，收取电力，提示获取cookie成功
  * 打开京喜财富岛，手动成功提现一次，提示获取cookie成功
@@ -129,19 +129,21 @@ if (cfdTokenRegex.test(url)) {
 function writeToken(obj) {
   const { pin, phoneid, timestamp } = obj;
   const result = { farm_jstoken: obj['farm_jstoken'], phoneid, timestamp, pin };
-  const tokens = JSON.parse($.getdata(jxTokens) || '[]');
+  let tokens = JSON.parse($.getdata(jxTokens) || '[]');
 
   const token1 = JSON.parse($.getdata(jxNcTokenKey1) || '{}');
   const token2 = JSON.parse($.getdata(jxNcTokenKey2) || '{}');
   if (token2 && token2.pin) {
     const token = tokens.find(x => x.pin === token2.pin);
     if (token) {
+      $.setdata('', jxNcTokenKey2);
       tokens.unshift(token);
     }
   }
   if (token1 && token1.pin) {
     const token = tokens.find(x => x.pin === token1.pin);
     if (token) {
+      $.setdata('', jxNcTokenKey1);
       tokens.unshift(token);
     }
   }
@@ -153,12 +155,13 @@ function writeToken(obj) {
     tokens.push(result);
   } else {
     tokens[tokenIndex] = result;
+    tokenIndex = tokenIndex + 1;
     tip = '更新';
   }
-  tokens = uniq(token);
+  tokens = uniq(tokens);
   $.setdata(JSON.stringify(tokens), jxTokens);
   $.log(`京喜【账号 ${tokenIndex}】: ${pin} \ntoken: ${JSON.stringify(result)}`);
-  $.msg($.name, `账号: ${pin} 设备: ${obj.phoneid.slice(0, 10)}...`, `${tip}京喜【账号 ${tokenIndex+1}】Cookie成功 🎉`);
+  $.msg($.name, `账号: ${pin} 设备: ${obj.phoneid.slice(0, 10)}...`, `${tip}京喜【账号 ${tokenIndex}】Cookie成功 🎉`);
 }
 
 function uniq(array) {
